@@ -1,7 +1,11 @@
 import os
 
-from .development import DevelopmentConfig
-from .production import ProductionConfig
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from .development import DevelopmentConfig  # noqa: E402
+from .production import ProductionConfig  # noqa: E402
 
 ENV = os.getenv("ENV", "development")
 
