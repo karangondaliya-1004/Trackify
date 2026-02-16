@@ -27,16 +27,6 @@ def root():
     return {"Welcome to Multi-Tenant Subscription Billing & Usage Platform"}
 
 
-@app.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
-    return {
-        "status": "ok",
-        "environment": config.__class__.__name__,
-        "service": "saas-core",
-        "message": "Service is running",
-    }
-
-
 @app.get("/db-check", tags=["Database"])
 def db_check(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
