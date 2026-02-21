@@ -1,28 +1,13 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
+from app.core.security.dependencies import get_current_user
 from app.core.security.password import hash_password
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.user import UserCreateRequest, UserResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
-
-
-class UserCreateRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(
-        ..., min_length=8, description="Password must be at least 8 characters long"
-    )
-
-
-class UserResponse(BaseModel):
-    id: UUID
-    email: EmailStr
-    is_active: bool
-    is_verified: bool
 
 
 @router.post(
@@ -56,3 +41,13 @@ def register_user(
     db.refresh(user)
 
     return user
+
+
+@router.get("/authorize/me")
+def read_current_user(
+    current_user: str = Depends(get_current_user),
+):
+    return {
+        "message": "You are authenticated",
+        "user_id": current_user,
+    }
