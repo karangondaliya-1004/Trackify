@@ -1,9 +1,14 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.constants.roles import OrgRole
 from app.core.security.dependencies import get_current_user
+from app.core.security.org_dependencies import require_org_owner
 from app.db.session import get_db
 from app.models.organization import Organization
+from app.models.organization_membership import OrganizationMembership
 from app.models.user import User
 from app.schemas.organization import (
     OrganizationCreateRequest,
@@ -25,9 +30,11 @@ def create_organization(
 ):
     existing_org = (
         db.query(Organization)
+        .join(OrganizationMembership)
         .filter(
             Organization.name == org_in.name,
-            Organization.owner_id == current_user.id,
+            OrganizationMembership.user_id == current_user.id,
+            OrganizationMembership.role == OrgRole.OWNER,
         )
         .first()
     )
@@ -35,15 +42,20 @@ def create_organization(
     if existing_org:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization with this name already exists",
+            detail="You already own an organization with this name",
         )
 
-    organization = Organization(
-        name=org_in.name,
-        owner_id=current_user.id,
+    organization = Organization(name=org_in.name, owner_id=current_user.id)
+    db.add(organization)
+    db.flush()
+
+    membership = OrganizationMembership(
+        user_id=current_user.id,
+        organization_id=organization.id,
+        role=OrgRole.OWNER,
     )
 
-    db.add(organization)
+    db.add(membership)
     db.commit()
     db.refresh(organization)
 
@@ -66,3 +78,16 @@ def list_organizations(
     )
 
     return organizations
+
+
+@router.delete("/{organization_id}")
+def delete_organization(
+    organization_id: UUID,
+    membership: OrganizationMembership = Depends(require_org_owner),
+    db: Session = Depends(get_db),
+):
+    organization = membership.organization
+    db.delete(organization)
+    db.commit()
+
+    return {"message": "Organization deleted successfully"}

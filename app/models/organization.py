@@ -44,3 +44,8 @@ class Organization(Base):
     )
 
     owner = relationship("User", backref="organizations")
+    memberships = relationship(
+        "OrganizationMembership",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+    )
