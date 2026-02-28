@@ -60,3 +60,8 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    sent_invitations = relationship(
+        "OrganizationInvitation",
+        back_populates="invited_by",
+        cascade="all, delete-orphan",
+    )
