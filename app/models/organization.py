@@ -1,44 +1,32 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, DateTime, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
 
-class User(Base):
-    __tablename__ = "users"
+class Organization(Base):
+    __tablename__ = "organizations"
 
     id = Column(
-        UUID(as_uuid=True),
+        PG_UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
         index=True,
     )
 
-    email = Column(
+    name = Column(
         String(255),
-        unique=True,
         nullable=False,
         index=True,
     )
 
-    hashed_password = Column(
-        String(255),
-        nullable=False,
-    )
-
-    is_active = Column(
-        Boolean,
-        default=True,
-        nullable=False,
-    )
-
-    is_verified = Column(
-        Boolean,
-        default=False,
+    owner_id = Column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -55,13 +43,14 @@ class User(Base):
         nullable=False,
     )
 
-    organization_memberships = relationship(
+    owner = relationship("User", backref="organizations")
+    memberships = relationship(
         "OrganizationMembership",
-        back_populates="user",
+        back_populates="organization",
         cascade="all, delete-orphan",
     )
-    sent_invitations = relationship(
+    invitations = relationship(
         "OrganizationInvitation",
-        back_populates="invited_by",
+        back_populates="organization",
         cascade="all, delete-orphan",
     )
