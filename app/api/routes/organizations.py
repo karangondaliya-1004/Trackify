@@ -76,7 +76,8 @@ def list_organizations(
 ):
     organizations = (
         db.query(Organization)
-        .filter(Organization.owner_id == current_user.id)
+        .join(OrganizationMembership)
+        .filter(OrganizationMembership.user_id == current_user.id)
         .order_by(Organization.created_at.desc())
         .all()
     )
