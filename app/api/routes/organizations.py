@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.constants.roles import OrgRole
@@ -173,60 +173,3 @@ def invite_user(
         "message": "Invitation sent successfully",
         "email": invitation.email,
     }
-
-
-def get_active_membership(
-    x_organization_id: str = Header(..., alias="X-Organization-ID"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Resolve active organization from request header
-    and validate membership.
-    """
-
-    organization = (
-        db.query(Organization).filter(Organization.id == x_organization_id).first()
-    )
-
-    if not organization:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found",
-        )
-
-    membership = (
-        db.query(OrganizationMembership)
-        .filter(
-            OrganizationMembership.organization_id == organization.id,
-            OrganizationMembership.user_id == current_user.id,
-        )
-        .first()
-    )
-
-    if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not a member of this organization",
-        )
-
-    return membership
-
-
-def require_org_role(allowed_roles: list[str]):
-    """
-    Dependency factory to enforce organization roles.
-    """
-
-    def role_checker(
-        membership: OrganizationMembership = Depends(get_active_membership),
-    ):
-        if membership.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient organization permissions",
-            )
-
-        return membership
-
-    return role_checker

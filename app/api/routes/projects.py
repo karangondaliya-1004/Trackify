@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.routes.organizations import require_org_role
+from app.core.security.dependencies import get_active_membership, require_org_role
 from app.db.session import get_db
 from app.models.organization_membership import OrganizationMembership
 from app.models.project import Project
@@ -53,3 +55,36 @@ def list_projects(
     )
 
     return projects
+
+
+def validate_project_in_active_org(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    membership: OrganizationMembership = Depends(get_active_membership),
+):
+    """
+    Fetch project and validate it belongs to active organization.
+    """
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        )
+
+    if project.organization_id != membership.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access to this project is forbidden",
+        )
+
+    return project
+
+
+@router.get("/{project_id}")
+def get_project(
+    project: Project = Depends(validate_project_in_active_org),
+):
+    return project
