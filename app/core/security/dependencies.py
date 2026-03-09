@@ -56,7 +56,9 @@ def get_active_membership(
     """
 
     organization = (
-        db.query(Organization).filter(Organization.id == x_organization_id, Organization.deleted_at.is_(None)).first()
+        db.query(Organization)
+        .filter(Organization.id == x_organization_id, Organization.deleted_at.is_(None))
+        .first()
     )
 
     if not organization:

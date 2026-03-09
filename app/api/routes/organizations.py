@@ -78,7 +78,10 @@ def list_organizations(
     organizations = (
         db.query(Organization)
         .join(OrganizationMembership)
-        .filter(OrganizationMembership.user_id == current_user.id, Organization.deleted_at.is_(None))
+        .filter(
+            OrganizationMembership.user_id == current_user.id,
+            Organization.deleted_at.is_(None),
+        )
         .order_by(Organization.created_at.desc())
         .all()
     )
@@ -100,6 +103,7 @@ def delete_organization(
     db.commit()
     db.refresh(organization)
     return {"message": "Organization deleted successfully"}
+
 
 @router.post(
     "/{organization_id}/invite",
