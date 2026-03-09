@@ -1,7 +1,7 @@
 from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from app.core.security.dependencies import get_active_membership, require_org_role
 from app.db.session import get_db
@@ -49,7 +49,7 @@ def list_projects(
 
     projects = (
         db.query(Project)
-        .filter(Project.organization_id == membership.organization_id)
+        .filter(Project.organization_id == membership.organization_id, Project.deleted_at.is_(None))
         .order_by(Project.created_at.desc())
         .all()
     )
@@ -66,7 +66,7 @@ def validate_project_in_active_org(
     Fetch project and validate it belongs to active organization.
     """
 
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
 
     if not project:
         raise HTTPException(
@@ -88,3 +88,29 @@ def get_project(
     project: Project = Depends(validate_project_in_active_org),
 ):
     return project
+
+@router.delete("/{project_id}")
+def delete_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    membership: OrganizationMembership = Depends(get_active_membership),
+):
+
+    project = (
+        db.query(Project)
+        .filter(
+            Project.id == project_id,
+            Project.organization_id == membership.organization_id,
+            Project.deleted_at.is_(None)
+        )
+        .first()
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    project.deleted_at = func.now()
+
+    db.commit()
+    db.refresh(project)
+    return {"message": "Project deleted"}

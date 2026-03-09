@@ -31,4 +31,6 @@ class Project(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    deleted_at = Column(DateTime, nullable=True)
+
     organization = relationship("Organization", back_populates="projects")

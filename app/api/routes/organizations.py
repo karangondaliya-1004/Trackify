@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from app.core.constants.roles import OrgRole
 from app.core.security.dependencies import get_current_user
@@ -77,7 +78,7 @@ def list_organizations(
     organizations = (
         db.query(Organization)
         .join(OrganizationMembership)
-        .filter(OrganizationMembership.user_id == current_user.id)
+        .filter(OrganizationMembership.user_id == current_user.id, Organization.deleted_at.is_(None))
         .order_by(Organization.created_at.desc())
         .all()
     )
@@ -92,11 +93,13 @@ def delete_organization(
     db: Session = Depends(get_db),
 ):
     organization = membership.organization
-    db.delete(organization)
+
+    # Soft delete
+    organization.deleted_at = func.now()
+
     db.commit()
-
+    db.refresh(organization)
     return {"message": "Organization deleted successfully"}
-
 
 @router.post(
     "/{organization_id}/invite",
