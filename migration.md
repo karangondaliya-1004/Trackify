@@ -61,8 +61,8 @@ Without migrations:
 
 | Problem | Explanation |
 |--------|--------|
-| Schema mismatch differ | Code and DB structure may |
-|  Team collaboration different | Everyone's DB becomes  |
+| Schema mismatch | Code and DB structure may differ |
+|  Team collaboration | Everyone's DB becomes different  |
 | Production deployment   | Dangerous manual updates |
 | Rollback impossible    | Hard to revert mistakes |
 
@@ -124,13 +124,11 @@ This creates:
 
 Explanation:
 
-  File          Purpose
-  ------------- -------------------------------
-  alembic.ini   Alembic configuration
-  env.py        migration environment setup
-  versions/     migration scripts stored here
-
-------------------------------------------------------------------------
+| File | Purpose |
+|--------|--------|
+| alembic.ini | Alembic configuration |
+|  env.py | migration environment setup  |
+| versions/   | migration scripts stored here |
 
 # 6. Configure Database Connection
 
