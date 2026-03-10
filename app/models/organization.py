@@ -36,6 +36,8 @@ class Organization(Base):
         nullable=False,
     )
 
+    deleted_at = Column(DateTime, nullable=True)
+
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -53,4 +55,7 @@ class Organization(Base):
         "OrganizationInvitation",
         back_populates="organization",
         cascade="all, delete-orphan",
+    )
+    projects = relationship(
+        "Project", back_populates="organization", cascade="all, delete-orphan"
     )
