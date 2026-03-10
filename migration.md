@@ -59,12 +59,12 @@ After migration:
 
 Without migrations:
 
-  Problem                 Explanation
-  ----------------------- ----------------------------------
-  Schema mismatch         Code and DB structure may differ
-  Team collaboration      Everyone's DB becomes different
-  Production deployment   Dangerous manual updates
-  Rollback impossible     Hard to revert mistakes
+| Problem | Explanation |
+|--------|--------|
+| Schema mismatch differ | Code and DB structure may |
+|  Team collaboration different | Everyone's DB becomes  |
+| Production deployment   | Dangerous manual updates |
+| Rollback impossible    | Hard to revert mistakes |
 
 With migrations:
 
