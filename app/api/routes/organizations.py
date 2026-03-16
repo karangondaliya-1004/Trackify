@@ -13,6 +13,8 @@ from app.db.session import get_db
 from app.models.organization import Organization
 from app.models.organization_invitation import OrganizationInvitation
 from app.models.organization_membership import OrganizationMembership
+from app.models.organization_subscription import OrganizationSubscription
+from app.models.subscription import SubscriptionPlan
 from app.models.user import User
 from app.schemas.organization import (
     OrganizationCreateRequest,
@@ -61,6 +63,19 @@ def create_organization(
     )
 
     db.add(membership)
+
+    free_plan = (
+        db.query(SubscriptionPlan).filter(SubscriptionPlan.name == "Free").first()
+    )
+
+    if free_plan:
+        subscription = OrganizationSubscription(
+            organization_id=organization.id,
+            plan_id=free_plan.id,
+            trial_ends_at=datetime.now(timezone.utc) + timedelta(days=14),
+        )
+        db.add(subscription)
+
     db.commit()
     db.refresh(organization)
 
